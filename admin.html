@@ -328,13 +328,39 @@
     }
 
     document.getElementById('exportForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      const service = formData.get('service_type');
-      const date = formData.get('date');
-      const url = `/attendance/export?service_type=${encodeURIComponent(service)}&date=${encodeURIComponent(date)}`;
-      window.open(url, '_blank');
-    });
+  e.preventDefault();
+
+  const formData = new FormData(this);
+  const service = formData.get('service_type');
+  const date = formData.get('date');
+
+  if (!service || !date) {
+    alert("Please select both service type and date.");
+    return;
+  }
+
+  const url = `/export?service_type=${encodeURIComponent(service)}&date=${encodeURIComponent(date)}`;
+
+  try {
+    const response = await fetch(url);
+    if (response.status === 200) {
+      // Create a blob from the response and trigger download
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${service} - ${date}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } else {
+      const error = await response.json();
+      alert("Export failed: " + error.message);
+    }
+  } catch (err) {
+    alert("An unexpected error occurred: " + err.message);
+  }
+});
+
 
     loadRecords();
     loadMembers();
