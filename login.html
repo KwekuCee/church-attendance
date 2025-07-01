@@ -2,72 +2,97 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width inital-scale= 1.0"/>
   <title>Admin Login</title>
   <style>
     body {
       margin: 0;
-      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: #e0e8e6;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(120deg, #1e3c72, #2a5298);
-      font-family: Arial, sans-serif;
+      height: 100vh;
     }
-    .login-container {
+    .card {
       background: white;
       padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      width: 300px;
-        opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 0.6s forwards;
-    }
-
-    @keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-    h3 {
-      text-align: center;
-      color: #1e3c72;
-    }
-    input, button {
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+      max-width: 400px;
+      animation: fadeIn 0.6s ease-out forwards;
     }
-
-    input, select, button {
-  transition: all 0.3s ease;
-}
-
-input:focus, select:focus {
-  border-color: #4CAF50;
-  box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
-}
-
-button:hover {
-  background-color: #45a049;
-  transform: scale(1.02);
-}
-
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(30px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #2c3e50;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
     button {
-      background: #1e3c72;
+      width: 100%;
+      background: #446e87;
       color: white;
       border: none;
+      padding: 12px;
       font-weight: bold;
+      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
-      background: #274785;
+      background: #72a3bf;
+      transition: 0.3s ease;
+      transform: scale(1.02);
     }
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .link a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .home-btn {
+      text-decoration: none;
+      color: #030f18;
+      cursor: pointer;
+    }
+
+  .home-btn:hover{
+    color: #72a3bf;
+    transition: 0.3s ;
+  }
+
+  .new {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    text-decoration: none;
+    color: #030f18;
+  }
+  .new:hover {
+    color:#72a3bf;
+    transition: 0.3s;
+  }
+   @media (max-width: 500px) {
+    .admin-login-btn {
+      font-size: 12px;
+      padding: 10px 14px;
+    }
+  }
   </style>
+
 </head>
 <body>
   <div class="login-container">
@@ -80,6 +105,8 @@ button:hover {
       <input type="password" name="password" placeholder="Password" required>
       <button type="submit">Login</button>
     </form>
+    <a href="/register.html" class="new" >New Admin? Register</a>
+    <a href="/" class="home-btn">🏠Home</a>
   </div>
 </body>
 </html>
