@@ -108,5 +108,39 @@
     <a href="/register.html" class="new" >New Admin? Register</a>
     <a href="/" class="home-btn">🏠Home</a>
   </div>
+  <p id="loginError" style="color: red; text-align:center"></p>
+
+  <script>
+  const form = document.getElementById('loginForm');
+  const errorBox = document.getElementById('loginError');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.textContent = "";  // Clear previous error
+
+    const formData = new FormData(form);
+    const body = new URLSearchParams();
+    for (const pair of formData) {
+      body.append(pair[0], pair[1]);
+    }
+
+    const response = await fetch('/login', {
+      method: 'POST',
+      body: body,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      window.location.href = "/admin";
+    } else {
+      errorBox.textContent = result.message || "Login failed.";
+    }
+  });
+</script>
+
 </body>
 </html>

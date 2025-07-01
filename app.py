@@ -151,24 +151,24 @@ def login():
     password = request.form.get('password')
 
     if not username or not password:
-        return "Missing cedentials", 400
-    
-    #Load users from users.json
+        return jsonify({'status': 'error', 'message': 'Username and password are required'}), 400
+
+    # Load users from users.json
     if os.path.exists(USERS_FILE):
         with open(USERS_FILE, 'r') as f:
             try:
                 users = json.load(f)
             except json.JSONDecodeError:
                 users = {}
-
     else:
         users = {}
 
-    if username in users and users[username]["password"] == password:
+    user = users.get(username)
+    if user and user.get("password") == password:
         session['logged_in'] = True
         session['username'] = username
 
-    # Create that admin’s Excel files if not already present
+        # Create admin-specific Excel files if missing
         attendance_file = f"{username}_attendance.xlsx"
         members_file = f"{username}_members.xlsx"
 
@@ -184,11 +184,10 @@ def login():
             ws.append(["Full Name", "Code", "Invited By", "Phone"])
             wb.save(members_file)
 
-        return redirect('/admin')
-        
+        return jsonify({'status': 'success'}), 200
 
+    return jsonify({'status': 'error', 'message': 'Invalid login credentials'}), 401
 
-    return "Invalid login", 401
 
 @app.route('/register', methods=['GET','POST'])
 def register():
