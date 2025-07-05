@@ -5,6 +5,8 @@ import os, random
 import json
 from flask import send_file
 from tempfile import NamedTemporaryFile
+import qrcode
+
 
 
 app = Flask(__name__)
@@ -109,7 +111,11 @@ def submit():
             now.strftime('%H:%M:%S')
         ])
         wb_a.save(attendance_file)
-        return jsonify({'status': 'success', 'code': code})
+        return jsonify({
+            'status': 'success',
+            'code': code,
+            'qr_url':f"/static/qr/{code}.png"
+        })
 
     # ✅ NEW MEMBER
     else:
@@ -123,6 +129,16 @@ def submit():
                 return jsonify({'status': 'error', 'message': 'This person already has a code. Use returning member option.'})
 
         code = f"MKC-{random.randint(100, 999)}"
+
+        #Generate QR Code
+        qr_data = code #Just use member code
+        img = qrcode.make(qr_data)
+
+        #Save the QR Code
+        qr_folder = os.path.join('static', 'qr')
+        os.makedirs(qr_folder, exist_ok=True)
+        qr_path = os.path.join(qr_folder, f"{code}.png")
+        img.save(qr_path)
 
         # Save to members file
         ws_m.append([fullname, code, invited_by, phone])
@@ -139,7 +155,11 @@ def submit():
             now.strftime('%H:%M:%S')
         ])
         wb_a.save(attendance_file)
-        return jsonify({'status': 'success', 'code': code})
+        return jsonify({
+            'status': 'success',
+            'code': code,
+            'qr_url':f"/static/qr/{code}.png"
+        })
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -421,6 +441,87 @@ def update_member():
     else:
         return jsonify({'status': 'error', 'message': 'Member not found'}), 404
 
+@app.route('/scan')
+def scan_qr_code():
+    return send_from_directory('.', 'scan.html')
+
+@app.route('/qr-check-in', methods=['POST'])
+def qr_check_in():
+    data = request.get_json()
+    code = data.get('code')
+    now = datetime.now()
+    today = now.strftime('%Y-%m-%d')
+
+    if not code:
+        return jsonify({'status': 'error', 'messsage': 'No code provided'}), 400
+    
+    #Search through all member files
+    users = {}
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as f:
+            users = json.load(f)
+
+    matched = None
+    for  username in users:
+        members_file = f"{username}_members.xlsx"
+        attendance_file = f"{username}_attenndance.xlsx"
+        
+        if not os.path.exists(members_file):
+            continue
+
+        wb_m = load_workbook(members_file)
+        ws_m = wb_m.active
+
+        for row in ws_m.iter_rows(min_row=2, values_only=True):
+            if str(row[1]) == str(code):
+                matched = {
+                    "fullname": row[0],
+                    "invited_by": row[2],
+                    "phone": row [3],
+                    "admin": username
+                }
+                break
+            if matched:
+                break
+
+        if not matched:
+            return jsonify({'status': 'error', 'message': 'Code not found in any church'}), 404
+        
+        #Now write attendance to that admin's attendance file
+        attendace_file = f"{matched['admin']}_attendance.xlsx"
+        service_type = "QR Check-In"
+
+        wb_a = load_workbook(attendance_file)
+        #Use or create service-specific sheet
+        sheet_name = f"{service_type} - {today}"
+        if sheet_name not in wb_a.sheetnames:
+            wb_a.create_sheet(title=sheet_name)
+            wb_a[sheet_name].append(["Full Name", "Code", "Invited By", "Service Type", "Phone", "Date", "Time"])
+
+            ws = wb_a[sheet_name]
+
+        #Avoid duplicate
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row[1] == code and row[5] == today:
+                return jsonify({'status': 'error', 'message': "Already marked today"}), 400
+            
+        attendance_row = [
+            matched.get('fullname', ''),
+            code,
+            matched.get('invited_by', ''),
+            service_type,
+            matched.get('phone', ''),
+            today,
+            now.strftime('%H:%M:%S')
+        ]
+
+        #Ensure it matches the column count in the header
+        if len(ws[1]) == len(attendance_row):
+            ws.append(attendance_row)
+        else:
+            return jsonify({'status': 'error', 'message': 'Sheet format mismatch'}), 500
+        
+    return jsonify({'status': 'success'})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

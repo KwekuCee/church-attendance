@@ -23,6 +23,7 @@
       width: 100%;
       max-width: 400px;
       animation: fadeIn 0.5s ease-in-out forwards;
+      height: 380px;
     }
 
     @keyframes fadeIn {
@@ -107,6 +108,28 @@
       color: #030f18;
     }
 
+     .scanner-link {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform:translateX(-50%);
+    display: inline-block;
+    margin-top: 20px;
+    background-color: #2e86de;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.3s ease;
+    text-align: center;
+    z-index: 1000;
+  }
+
+  .scanner-link:hover {
+    background-color: #1e5fa3;
+  }
+
   </style>
 </head>
 <body>
@@ -127,6 +150,7 @@
 
     <a href="/register.html" class="new">New Admin? Register</a>
     <a href="/" class="home-btn">🏠 Home</a>
+    <a href="/scan" class="scanner-link">📷Scan QR Code</a>
   </div>
 
   <script>
