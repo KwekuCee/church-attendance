@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QR Scanner - Church Attendance</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f4f7;
+      margin: 0;
+      padding: 1rem;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    #reader {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    select, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 90%;
+      max-width: 400px;
+    }
+    #status {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Scan Member QR Code</h2>
+
+  <label>Select Service:</label><br>
+  <select id="service_type">
+    <option value="">-- Select --</option>
+    <option>Sunday Service</option>
+    <option>Midweek Service</option>
+    <option>Prayer Meeting</option>
+  </select>
+
+  <div id="reader"></div>
+
+  <p id="status"></p>
+
+  <script>
+    const admin_username = "{{ session.username || 'admin' }}"; // fallback to 'admin'
+
+    function showMessage(msg, color = "green") {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.style.color = color;
+    }
+
+    function onScanSuccess(decodedText) {
+      const service = document.getElementById("service_type").value;
+      if (!service) {
+        showMessage("Please select a service first", "red");
+        return;
+      }
+
+      // Submit attendance
+      fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: decodedText,
+          service_type: service,
+          admin_username: admin_username
+        })
+      }).then(res => res.json()).then(result => {
+        if (result.status === 'success') {
+          showMessage("✅ Attendance recorded for: " + decodedText);
+        } else {
+          showMessage("⚠️ " + result.message, "orange");
+        }
+      }).catch(() => {
+        showMessage("❌ Error submitting attendance", "red");
+      });
+    }
+
+    const qrScanner = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices.length > 0) {
+        qrScanner.start(
+          devices[0].id,
+          {
+            fps: 10,
+            qrbox: 250
+          },
+          onScanSuccess
+        );
+      }
+    });
+  </script>
+</body>
+</html>
