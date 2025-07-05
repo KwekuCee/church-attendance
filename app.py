@@ -527,5 +527,13 @@ def qr_check_in():
 def scanner():
     return send_from_directory('.', 'scanner.html')
 
+@app.route('/qr-submit', methods=['POST'])
+def qr_submit():
+    data = request.get_json()
+    code = data.get('code')
+    # Look up member by code and log attendance...
+    # return jsonify({ status: 'success', name: 'John Doe' })
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
