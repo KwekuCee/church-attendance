@@ -523,5 +523,9 @@ def qr_check_in():
         
     return jsonify({'status': 'success'})
 
+@app.route('/scanner')
+def scanner():
+    return send_from_directory('.', 'scanner.html')
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
