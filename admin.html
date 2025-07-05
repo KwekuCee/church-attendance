@@ -39,6 +39,11 @@
       cursor: pointer;
     }
 
+    .logout-btn:hover {
+  background-color: #1f618d;
+}
+
+
     .tabs {
       display: flex;
       justify-content: center;
@@ -163,12 +168,18 @@
 <body>
 
   <div class="top-bar">
-    <img src="Logo.png" alt="Logo" />
-    <h1>Admin Dashboard</h1>
+  <img src="Logo.png" alt="Logo" />
+  <h1>Admin Dashboard</h1>
+  <div style="display: flex; gap: 10px;">
+    <a href="/scanner.html">
+      <button class="logout-btn" style="background: #2980b9;">📷 Scanner</button>
+    </a>
     <form action="/logout" method="POST">
       <button class="logout-btn">Logout</button>
     </form>
   </div>
+</div>
+
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('attendance')">Attendance</button>
