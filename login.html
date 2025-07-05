@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #e0e8e6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 0.5s ease-in-out forwards;
+      height: 380px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h3 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+
+    form input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      background-color: #446e87;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      transition: background 0.3s ease;
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #72a3bf;
+      transform: scale(1.02);
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .link a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .home-btn {
+      text-align: center;
+      display: block;
+      margin-top: 12px;
+      color: #030f18;
+      text-decoration: none;
+    }
+
+    .home-btn:hover,
+    .new:hover {
+      color: #72a3bf;
+    }
+
+    .new {
+      display: block;
+      text-align: center;
+      margin-top: 12px;
+      text-decoration: none;
+      color: #030f18;
+    }
+
+    
+
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="Logo.png" alt="Church Logo" style="max-width: 150px">
+    </div>
+    <h3>Admin Login</h3>
+
+    <!-- ✅ Make sure the form has an ID -->
+    <form id="loginForm">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+
+    <p id="loginError" class="error">Invalid login</p>
+
+    <a href="/register.html" class="new">New Admin? Register</a>
+    <a href="/" class="home-btn">🏠 Home</a>
+   
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errorBox = document.getElementById('loginError');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.classList.remove('show');
+      errorBox.textContent = "";
+
+      const formData = new FormData(form);
+      const body = new URLSearchParams();
+      for (const pair of formData) {
+        body.append(pair[0], pair[1]);
+      }
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          body: body,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          window.location.href = "/admin";
+        } else {
+          errorBox.textContent = result.message || "Login failed.";
+          errorBox.classList.add('show');
+        }
+
+      } catch (err) {
+        errorBox.textContent = "Server error. Please try again.";
+        errorBox.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>
