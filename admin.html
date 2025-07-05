@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+    }
+
+    .top-bar {
+      background: #2c3e50;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .top-bar img {
+      height: 40px;
+    }
+
+    .top-bar h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .logout-btn {
+      background: #e74c3c;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      background: #ecf0f1;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: #bdc3c7;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: #8e44ad;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 2rem;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    input[type="text"], input[type="date"], select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .form-row button {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .form-row button:hover {
+      background: #1e8449;
+    }
+
+    .delete-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .save-btn {
+      background: #2980b9;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .cancel-btn {
+      background: #95a5a6;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #2ecc71;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      display: none;
+      z-index: 1000;
+      font-weight: bold;
+    }
+     @media (max-width: 500px) {
+    .admin-login-btn {
+      font-size: 12px;
+      padding: 10px 14px;
+    }
+  }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <img src="Logo.png" alt="Logo" />
+    <h1>Admin Dashboard</h1>
+    <form action="/logout" method="POST">
+      <button class="logout-btn">Logout</button>
+    </form>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('attendance')">Attendance</button>
+    <button class="tab-btn" onclick="switchTab('members')">Members</button>
+  </div>
+
+  <div id="attendance" class="tab-content active">
+    <h2>Attendance Records</h2>
+    <form id="exportForm" class="form-row">
+      <select name="service_type" required>
+        <option value="">Select Service</option>
+        <option>Sunday Service</option>
+        <option>Midweek Service</option>
+        <option>Prayer Meeting</option>
+      </select>
+      <input type="date" name="date" required />
+      <button type="submit">Export</button>
+    </form>
+
+    <table id="records-table">
+      <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Code</th>
+          <th>Invited By</th>
+          <th>Service Type</th>
+          <th>Phone</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="members" class="tab-content">
+    <h2>Church Members</h2>
+    <table id="members-table">
+      <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Code</th>
+          <th>Invited By</th>
+          <th>Phone</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="toast">Updated!</div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      event.target.classList.add("active");
+    }
+
+    async function loadRecords() {
+      const res = await fetch('/records');
+      const data = await res.json();
+      const tbody = document.querySelector("#records-table tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(cell => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+
+        const td = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.textContent = "Delete";
+        btn.className = "delete-btn";
+        btn.onclick = async () => {
+          if (confirm("Are you sure?")) {
+            const body = {
+              fullname: row[0],
+              code: row[1],
+              date: row[5],
+              time: row[6]
+            };
+            await fetch("/delete-record", {
+              method: "POST",
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(body)
+            });
+            loadRecords();
+          }
+        };
+        td.appendChild(btn);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadMembers() {
+      const res = await fetch('/members');
+      const members = await res.json();
+      const tbody = document.querySelector("#members-table tbody");
+      tbody.innerHTML = "";
+
+      members.forEach(member => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input value="${member.fullname}" data-field="fullname"></td>
+          <td><input value="${member.code}" disabled></td>
+          <td><input value="${member.invited_by}" data-field="invited_by"></td>
+          <td><input value="${member.phone}" data-field="phone"></td>
+          <td>
+            <button class="save-btn">Save</button>
+            <button class="cancel-btn">Cancel</button>
+          </td>
+        `;
+
+        const inputs = tr.querySelectorAll('input');
+        const original = [...inputs].map(i => i.value);
+
+        tr.querySelector(".save-btn").onclick = async () => {
+          const body = {
+            code: member.code,
+            fullname: inputs[0].value,
+            invited_by: inputs[2].value,
+            phone: inputs[3].value
+          };
+          const res = await fetch('/members/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          const result = await res.json();
+          if (result.status === 'success') showToast("Member updated!");
+          else alert('Error: ' + result.message);
+        };
+
+        tr.querySelector(".cancel-btn").onclick = () => {
+          inputs[0].value = original[0];
+          inputs[2].value = original[2];
+          inputs[3].value = original[3];
+        };
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.style.display = "block";
+      setTimeout(() => toast.style.display = "none", 2000);
+    }
+
+    document.getElementById('exportForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(this);
+  const service = formData.get('service_type');
+  const date = formData.get('date');
+
+  if (!service || !date) {
+    alert("Please select both service type and date.");
+    return;
+  }
+
+  const url = `/export?service_type=${encodeURIComponent(service)}&date=${encodeURIComponent(date)}`;
+
+  try {
+    const response = await fetch(url);
+    if (response.status === 200) {
+      // Create a blob from the response and trigger download
+      const blob = await response.blob();
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `${service} - ${date}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } else {
+      const error = await response.json();
+      alert("Export failed: " + error.message);
+    }
+  } catch (err) {
+    alert("An unexpected error occurred: " + err.message);
+  }
+});
+
+
+    loadRecords();
+    loadMembers();
+  </script>
+
+</body>
+</html>
