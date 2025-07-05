@@ -1,5 +1,4 @@
 flask
 openpyxl
-qrcode
-pillow
+qrcode[pil]
 gunicorn
