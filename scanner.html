@@ -1,101 +1,135 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>QR Scanner - Church Attendance</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f4f4f4;
       text-align: center;
-      background: #f0f4f7;
-      margin: 0;
-      padding: 1rem;
-    }
-    h2 {
-      color: #2c3e50;
+      padding: 20px;
     }
     #reader {
       width: 100%;
       max-width: 400px;
-      margin: 0 auto;
+      margin: auto;
     }
-    select, button {
-      padding: 10px;
+    #cameraLabel {
       margin: 10px 0;
-      width: 90%;
-      max-width: 400px;
-    }
-    #status {
       font-weight: bold;
+    }
+    #switchCamera {
       margin-top: 10px;
+      padding: 10px 15px;
+      background-color: #007BFF;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #switchCamera:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      margin-top: 20px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
+
   <h2>Scan Member QR Code</h2>
-
-  <label>Select Service:</label><br>
-  <select id="service_type">
-    <option value="">-- Select --</option>
-    <option>Sunday Service</option>
-    <option>Midweek Service</option>
-    <option>Prayer Meeting</option>
-  </select>
-
   <div id="reader"></div>
-
-  <p id="status"></p>
+  <div id="cameraLabel">Loading cameras...</div>
+  <button id="switchCamera">Switch Camera</button>
+  <div class="message" id="status"></div>
 
   <script>
-    const admin_username = "{{ session.username || 'admin' }}"; // fallback to 'admin'
+    let qrScanner;
+    let cameras = [];
+    let currentCameraIndex = 0;
 
-    function showMessage(msg, color = "green") {
-      const el = document.getElementById("status");
-      el.textContent = msg;
-      el.style.color = color;
+    const status = document.getElementById("status");
+    const cameraLabel = document.getElementById("cameraLabel");
+
+    function onScanSuccess(decodedText, decodedResult) {
+  qrScanner.stop().then(() => {
+    status.innerText = "Submitting attendance...";
+
+    // 🔊 Say welcome to church
+    const utterance = new SpeechSynthesisUtterance("Welcome to church");
+    speechSynthesis.speak(utterance);
+
+    // 📳 Vibrate (if supported)
+    if (navigator.vibrate) {
+      navigator.vibrate(200); // vibrate for 200ms
     }
 
-    function onScanSuccess(decodedText) {
-      const service = document.getElementById("service_type").value;
-      if (!service) {
-        showMessage("Please select a service first", "red");
-        return;
+    // 📤 Send scanned code to backend
+    fetch('/qr-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: decodedText })
+    }).then(res => res.json()).then(response => {
+      if (response.status === 'success') {
+        status.innerText = "✅ Attendance recorded for: " + response.name;
+      } else {
+        status.innerText = "⚠️ " + response.message;
       }
+    }).catch(err => {
+      status.innerText = "❌ Error: " + err;
+    });
+  });
+}
 
-      // Submit attendance
-      fetch('/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: decodedText,
-          service_type: service,
-          admin_username: admin_username
-        })
-      }).then(res => res.json()).then(result => {
-        if (result.status === 'success') {
-          showMessage("✅ Attendance recorded for: " + decodedText);
-        } else {
-          showMessage("⚠️ " + result.message, "orange");
-        }
-      }).catch(() => {
-        showMessage("❌ Error submitting attendance", "red");
-      });
-    }
 
-    const qrScanner = new Html5Qrcode("reader");
     Html5Qrcode.getCameras().then(devices => {
-      if (devices.length > 0) {
-        qrScanner.start(
-          devices[0].id,
-          {
-            fps: 10,
-            qrbox: 250
-          },
-          onScanSuccess
+      if (devices && devices.length > 0) {
+        cameras = devices;
+
+        // Try to use the rear camera first
+        const rearIndex = devices.findIndex(device =>
+          device.label.toLowerCase().includes("back") ||
+          device.label.toLowerCase().includes("rear")
         );
+
+        currentCameraIndex = rearIndex !== -1 ? rearIndex : 0;
+        startScanner(devices[currentCameraIndex].id);
+      } else {
+        cameraLabel.textContent = "No cameras found.";
       }
     });
+
+    function startScanner(cameraId) {
+      if (qrScanner) {
+        qrScanner.stop().then(() => {
+          qrScanner.clear();
+          startWithCamera(cameraId);
+        });
+      } else {
+        startWithCamera(cameraId);
+      }
+    }
+
+    function startWithCamera(cameraId) {
+      qrScanner = new Html5Qrcode("reader");
+      qrScanner.start(cameraId, { fps: 10, qrbox: 250 }, onScanSuccess)
+        .then(() => {
+          cameraLabel.textContent = `Using Camera: ${cameras[currentCameraIndex].label}`;
+        })
+        .catch(err => {
+          cameraLabel.textContent = "Camera start failed: " + err;
+        });
+    }
+
+    document.getElementById("switchCamera").addEventListener("click", () => {
+      if (cameras.length <= 1) return;
+      currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+      startScanner(cameras[currentCameraIndex].id);
+    });
   </script>
+
 </body>
 </html>
