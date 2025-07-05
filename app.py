@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, session
 from openpyxl import Workbook, load_workbook
 from datetime import datetime
-import os, random
+import os, random, qrcode
 import json
 from flask import send_file
 from tempfile import NamedTemporaryFile
-import qrcode
+
 
 
 
@@ -131,14 +131,11 @@ def submit():
         code = f"MKC-{random.randint(100, 999)}"
 
         #Generate QR Code
-        qr_data = code #Just use member code
-        img = qrcode.make(qr_data)
-
-        #Save the QR Code
-        qr_folder = os.path.join('static', 'qr')
+        qr = qrcode.make(code)
+        qr_folder = os.path.join('static', 'qrcodes')
         os.makedirs(qr_folder, exist_ok=True)
         qr_path = os.path.join(qr_folder, f"{code}.png")
-        img.save(qr_path)
+        qr.save(qr_path)
 
         # Save to members file
         ws_m.append([fullname, code, invited_by, phone])
@@ -154,12 +151,14 @@ def submit():
             today,
             now.strftime('%H:%M:%S')
         ])
+
         wb_a.save(attendance_file)
         return jsonify({
             'status': 'success',
             'code': code,
-            'qr_url':f"/static/qr/{code}.png"
+            'qr_url':f"/static/qrcodes/{code}.png"
         })
+    
 
 
 @app.route('/login', methods=['GET', 'POST'])
