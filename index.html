@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Church Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #e0e8e6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #e0e8e6;
+      padding: 3.7rem 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 100%;
+      min-height: 550px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.6s forwards;
+    }
+
+    @keyframes fadeInUp{
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h2 {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+
+    input::placeholder,
+    select {
+      font-size: 14px;
+    }
+
+    input, select, button {
+      transition:all 0.3s ease;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    input:focus, select:focus {
+      border-color: #4CAF50;
+      box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+    }
+
+    button {
+      background-color: #446e87;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #72a3bf;
+      transform: scale(1.02);
+    }
+   .success {
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .success.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .admin-login-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform:translateX(-50%);
+    background-color: #446e87;
+    color: #e0e8e6;
+    padding: 12px 18px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    transform-origin: center;
+  }
+
+  .admin-login-btn:hover {
+    background-color: #72a3bf;
+    transform: translateX(-50%) scale(1.05);
+  }
+
+  .scanner-link {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform:translateX(-50%);
+    display: inline-block;
+    margin-top: 20px;
+    background-color: #2e86de;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.3s ease;
+    text-align: center;
+    z-index: 1000;
+  }
+
+  .scanner-link:hover {
+    background-color: #1e5fa3;
+  }
+
+  @media (max-width: 500px) {
+    .admin-login-btn {
+      font-size: 12px;
+      padding: 10px 14px;
+    }
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style ="text-align: center; margin-bottom:20px;">
+    <img src="Logo.png" alt="Church Logo" style="max-width: 150px">
+  </div>
+    <div id="adminBtnWrapper" style="display: none;">
+      <a href="/login" id= "adminBtn" class="admin-login-btn" title="Admin Login">🔒 Admin</a>
+    </div>
+    <h2>Church Attendance</h2>
+
+    <!--Toggle Buttons-->
+    <div style="margin-bottom: 15px;">
+      <button type="button" onclick="switchMode('new')">New Member</button>
+      <button type="button" onclick="switchMode('returning')">Returning Member</button>
+    </div>
+    <!--Message Display-->
+    <p class="success" id="successMsg"></p>
+
+    <!--NEW Member Form-->
+    <form id="newMemberForm" style="display: block;">
+       <input type="text" name="fullname" placeholder="Full Name" required>
+        <input type="text" name="invited_by" placeholder="Invited By (optional)">
+        <input type="tel" name="phone" placeholder="Phone Number (e.g. 0241234567)" required>
+      <select name="service_type" required>
+        <option value="">-- Select Service Type --</option>
+        <option value="Sunday Service">Sunday Service</option>
+        <option value="Bible Study">Midweek Service</option>
+        <option value="Prayer Meeting">Prayer Meeting</option>
+      </select>
+      <select id="churchSelect" name="admin_username" required>
+        <option value="">-- Select Your Church --</option>
+      </select>
+      <button type="submit">Submit Attendance</button>
+    </form>
+    
+     <a href="/scan" class="scanner-link">📷Scan QR Code</a>
+
+    <!--RETURNING Member Form-->
+    <form id="returningMemberForm" style="display: none;">
+        <input type="text" name="code" placeholder="Enter Member Code" required>
+      <select name="service_type" required>
+        <option value="">-- Select Service Type --</option>
+        <option value="Sunday Service">Sunday Service</option>
+        <option value="Midweek Service">Midweek Service</option>
+        <option value="Prayer Meeting">Prayer Meeting</option>
+      </select>
+      <select id="churchSelect" name="admin_username" required>
+        <option value="">-- Select Your Church --</option>
+      </select>
+      <button type="submit">Submit Attendance</button>
+    </form>
+
+  </div>
+
+  
+
+  <script>
+  // Elements
+  const newForm = document.getElementById('newMemberForm');
+  const returningForm = document.getElementById('returningMemberForm');
+  const msg = document.getElementById('successMsg');
+  const adminWrapper = document.getElementById('adminBtnWrapper');
+  const adminBtn = document.getElementById('adminBtn');
+
+  // 🔁 Admin Login/Logout Button Handler
+  async function updateAdminButton() {
+    const res = await fetch('/session-status');
+    const status = await res.json();
+
+    if (status.logged_in) {
+      adminWrapper.style.display = 'block';
+      adminBtn.textContent = '🔓 Logout';
+      adminBtn.href = '#';
+      adminBtn.onclick = async function(e) {
+        e.preventDefault();
+        await fetch('/logout', { method: 'POST' });
+        window.location.href = '/';
+      };
+    } else {
+      adminWrapper.style.display = 'block';
+      adminBtn.textContent = '🔒 Admin';
+      adminBtn.href = '/login';
+      adminBtn.onclick = null;
+    }
+  }
+
+  updateAdminButton();
+
+  // 🔄 Form Toggle
+  function switchMode(mode) {
+    if (mode === 'new') {
+      newForm.style.display = 'block';
+      returningForm.style.display = 'none';
+    } else {
+      newForm.style.display = 'none';
+      returningForm.style.display = 'block';
+    }
+    msg.textContent = '';
+  }
+
+  // 🆕 New Member Submit
+  newForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(newForm);
+    const data = {
+      admin_username: formData.get("admin_username"),
+      fullname: formData.get("fullname"),
+      invited_by: formData.get("invited_by"),
+      phone: formData.get("phone"),
+      service_type: formData.get("service_type")
+    };
+    await submitAttendance(data);
+    newForm.reset();
+  });
+
+  // 🔁 Returning Member Submit
+  returningForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(returningForm);
+    const data = {
+      admin_username: formData.get("admin_username"),
+      code: formData.get("code"),
+      service_type: formData.get("service_type")
+    };
+    await submitAttendance(data);
+    returningForm.reset();
+  });
+
+  // ✅ Universal Submit Handler
+  async function submitAttendance(data) {
+    const res = await fetch('/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+
+    if (result.status === 'success') {
+      msg.textContent = "✅ Attendance Recorded! Your code: " + result.code;
+      msg.style.color = 'green';
+    } else {
+      msg.textContent = "⚠️ " + result.message;
+      msg.style.color = 'red';
+    }
+
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 3000);
+  }
+</script>
+<script>
+  const churchSelect = document.getElementById("churchSelect");
+
+  // Fetch churches from backend and populate dropdown
+   fetch('/churches')
+    .then(res => res.json())
+    .then(churches => {
+      const selects = document.querySelectorAll('select[name="admin_username"]');
+      selects.forEach(select => {
+        churches.forEach(ch => {
+          const opt = document.createElement("option");
+          opt.value = ch.admin;
+          opt.textContent = ch.church;
+          select.appendChild(opt.cloneNode(true));
+      });
+    });
+  });
+</script>
+
+
+</body>
+</html>
